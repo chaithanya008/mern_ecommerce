@@ -45,12 +45,13 @@ const userSchema = new mongoose.Schema(
 // virtual field
 
 userSchema
-  .virtual("password") // sending password to client
+  .virtual("password") // password is the virtual property being created here
+  // sending password to client
   .set(function (password) {
     // coming from client side, above
-    this._password = password; // _password is temp var
+    this._password = password; // _password is temp var?
     this.salt = uuidv1(); // gives random string
-    this.hashPassword = this.encryptPassword(password); // encryptPassword is a fn
+    this.hashPassword = this.encryptPassword(password); // encryptPassword is a user defined fn
   })
   .get(function () {
     return this._password; // return password value?
@@ -61,14 +62,17 @@ userSchema.method = {
   encryptPassword: function (password) {
     if (!password) return "";
     try {
-      return crypto
-        .createHmac("sha1", this.salt) //hash the password, sha1 method, salt is long unique string
-        .update(password)
-        .digest("hex");
+      return (
+        crypto
+          .createHmac("sha256", this.salt) //hash the password, sha1 method, salt is long unique string. documentation says not to use sha1
+          // above, use 2nd var as secret key to create final hash
+          .update(password) // ingest streaming data, can be invoked multiple times
+          .digest("hex")
+      ); // output format
     } catch (err) {
       return "";
     }
   },
 };
 
-module.exports = mongoose.model("User", userSchema); // creating a module
+module.exports = mongoose.model("User", userSchema); // creating a model
